@@ -1,0 +1,68 @@
+{
+  "name": "dk-file-generator",
+  "author": "Dmitry Kazakov",
+  "license": "MIT",
+  "version": "1.0.36",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkazakov8/dk-file-generator.git"
+  },
+  "description": "Creates helper files",
+  "scripts": {
+    "analyze:js": "eslint --ignore-path .formatignore --ext \".js,.ts,.tsx\" ./",
+    "format:js": "eslint --ignore-path .formatignore --ext \".js,.ts,.tsx\" --fix",
+    "build": "rm -rf ./dist&&tsc --project tsconfig-compile.json",
+    "test": "nyc mocha",
+    "prepublishOnly": "yarn build",
+    "posttest": "nyc report --reporter=json"
+  },
+  "nyc": {
+    "include": "src"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "set -e&&yarn test&&git add coverage&&lint-staged"
+    }
+  },
+  "dependencies": {
+    "chalk": "4.1.2",
+    "chokidar": "3.5.3",
+    "fs-extra": "10.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "4.3.0",
+    "@types/fs-extra": "9.0.13",
+    "@types/glob": "7.1.4",
+    "@types/mocha": "9.0.0",
+    "@types/node": "17.0.8",
+    "chai": "4.3.4",
+    "dk-eslint-config": "1.0.15",
+    "husky": "4.3.8",
+    "lint-staged": "12.1.7",
+    "mocha": "9.1.3",
+    "nyc": "15.1.0",
+    "react": "17.0.2",
+    "ts-node": "10.4.0",
+    "typescript": "4.5.4"
+  },
+  "peerDependencies": {
+    "typescript": "^4.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/dkazakov8/dk-file-generator/issues"
+  },
+  "homepage": "https://github.com/dkazakov8/dk-file-generator#readme",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "keywords": [
+    "reexport",
+    "file",
+    "creator",
+    "generation",
+    "typescript",
+    "validators"
+  ]
+}
