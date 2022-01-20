@@ -8,22 +8,13 @@ import fs from 'fs';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
 
-import { generateFiles } from './generateFiles';
-import { TypeGenerateFilesParams } from './types';
 import { logsPrefix } from './const';
+import { generateFiles } from './generateFiles';
+import { TypeGenerateFilesWatchParams } from './types';
 
 const watchLogsPrefix = `${logsPrefix} ${chalk.yellow('[watch]')}`;
 
-export function generateFilesOnChange(
-  options: TypeGenerateFilesParams & {
-    paths: Array<string>;
-
-    onStart?: () => void;
-    onFinish?: () => void;
-    changedFilesLogs?: boolean;
-    aggregationTimeout?: number;
-  }
-) {
+export function generateFilesOnChange(options: TypeGenerateFilesWatchParams) {
   const {
     paths,
     configs,

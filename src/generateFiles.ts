@@ -26,13 +26,20 @@ function withMeasure({
   plugin: TypePluginName;
   callback: () => void;
 }) {
-  // eslint-disable-next-line no-console
-  if (logs) console.time(plugin);
+  if (!logs) {
+    callback();
+
+    return;
+  }
+
+  const startTime = Date.now();
 
   callback();
 
+  const endTime = getTimeDelta(startTime, Date.now());
+
   // eslint-disable-next-line no-console
-  if (logs) console.timeEnd(plugin);
+  console.log(`${logsPrefix} ${chalk.yellow(`[${plugin}]`)} took ${chalk.yellow(endTime)} seconds`);
 }
 
 function applyModifications({

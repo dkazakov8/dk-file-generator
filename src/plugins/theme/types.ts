@@ -22,7 +22,7 @@ export type TypeProcessParamsTheme = {
   config: Array<{
     file: TypeFilePath;
     targetFile: TypeFilePath;
-    exportTemplate: (params: { toFileName: string; themes: TypeThemes }) => string;
+    exportTemplate: (params: { targetFileNameNoExt: string; themes: TypeThemes }) => string;
   }>;
 
   logs?: boolean;

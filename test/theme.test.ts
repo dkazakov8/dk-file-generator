@@ -201,11 +201,11 @@ describe('generate theme', () => {
         {
           file,
           targetFile,
-          exportTemplate: ({ toFileName, themes }) =>
+          exportTemplate: ({ targetFileNameNoExt, themes }) =>
             `/* eslint-disable */
 // This file is auto-generated
 
-export const ${toFileName} = ${JSON.stringify(themes, null, 2)}`,
+export const ${targetFileNameNoExt} = ${JSON.stringify(themes, null, 2)}`,
         },
       ],
     });

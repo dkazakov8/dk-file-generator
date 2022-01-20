@@ -34,11 +34,11 @@ export const generateTheme: TypeGeneratorPlugin<TypeProcessParamsTheme> = (param
   const modifiedFiles: TypeModifiedFiles = [];
 
   config.forEach(({ file, targetFile, exportTemplate }) => {
-    const { name: toFileName } = path.parse(targetFile);
+    const { name: targetFileNameNoExt } = path.parse(targetFile);
 
     const template = fs.readFileSync(file, fileEncoding);
     const themes = convertCssToJs(template);
-    const content = exportTemplate({ toFileName, themes });
+    const content = exportTemplate({ targetFileNameNoExt, themes });
     const fileOverwritten = saveFile({ content, filePath: targetFile });
 
     if (fileOverwritten) {
