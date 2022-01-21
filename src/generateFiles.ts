@@ -102,22 +102,25 @@ export function generateFilesOnChange(options: TypeGenerateFilesParams) {
   let watchDebounceTimeout: NodeJS.Timeout;
   let watcher = chokidar.watch(paths, { ignoreInitial: true });
 
-  const handlerAdd = fileChanged('add');
-  const handlerChange = fileChanged('change');
-  const handlerUnlink = fileChanged('unlink');
+  let isGenerating = false;
 
   function addWatchers() {
-    watcher.on('add', handlerAdd).on('change', handlerChange).on('unlink', handlerUnlink);
+    watcher
+      .on('add', fileChanged('add'))
+      .on('change', fileChanged('change'))
+      .on('unlink', fileChanged('unlink'));
   }
 
   function fileChanged(type: string) {
     return (filePath: string, stats?: fs.Stats) => {
-      if (changedFilesLogs) {
-        changedFilesLogsData.push({ type, filePath, mtime: stats?.mtimeMs });
-      }
+      if (isGenerating) return;
+
+      changedFilesLogsData.push({ type, filePath, mtime: stats?.mtimeMs });
 
       clearTimeout(watchDebounceTimeout);
       watchDebounceTimeout = setTimeout(() => {
+        isGenerating = true;
+
         let changedFiles = changedFilesLogsData.map((params) => params.filePath);
         changedFiles = changedFiles.filter((value, index) => changedFiles.indexOf(value) === index);
 
@@ -141,12 +144,14 @@ export function generateFilesOnChange(options: TypeGenerateFilesParams) {
 
           generateFiles({ ...options, changedFiles });
 
+          onFinish?.();
+
           changedFilesLogsData = [];
 
           watcher = chokidar.watch(paths, { ignoreInitial: true });
           addWatchers();
 
-          onFinish?.();
+          isGenerating = false;
         });
       }, aggregationTimeout || 0);
     };
