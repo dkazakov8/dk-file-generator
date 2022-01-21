@@ -27,40 +27,24 @@ Also it can watch your filesystem and recreate files on fly.
 1. Add `dk-file-generator` to package.json and install
 2. Execute overall generation before build (create some file and execute via `node` or add to your current build file)
 ```typescript
-import { generateFiles, TypeGenerateFilesParams } from 'dk-file-generator';
+import { generateFiles } from 'dk-file-generator';
 
-const params: TypeGenerateFilesParams = {
+generateFiles({
   configs: [],
   timeLogs: true,
   timeLogsOverall: true,
   fileModificationLogs: true,
-}
 
-generateFiles(params);
+  // If you use watch mode for local development
+  watch: {
+    paths: [path.resolve(__dirname, 'src')],
+    changedFilesLogs: true,
+    aggregationTimeout: 500,
+  }
+});
 ```
 
-`generateFiles` works synchronously.
-
-3. If you use watch mode for local development (like `webpack --watch`), start `generateFilesOnChange`
-after `generateFiles`
-```typescript
-import { generateFilesOnChange, TypeGenerateFilesWatchParams } from 'dk-file-generator';
-
-const paramsWatch: TypeGenerateFilesWatchParams = {
-  // watched paths
-  paths: [path.resolve(__dirname, 'src')],
-  configs: [],
-  timeLogs: true,
-  timeLogsOverall: true,
-  changedFilesLogs: true,
-  aggregationTimeout: 500,
-  fileModificationLogs: true,
-}
-
-generateFilesOnChange(paramsWatch);
-```
-
-Basic installation is complete, use plugins to add some functionality.
+`generateFiles` works synchronously. Basic installation is complete, use plugins to add some functionality.
 
 ### Plugin: theme
 

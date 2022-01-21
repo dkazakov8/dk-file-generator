@@ -1,4 +1,7 @@
+import fs from 'fs';
+
 import chalk from 'chalk';
+import chokidar from 'chokidar';
 
 import { TypeModifiedFiles, TypeGeneratorPlugin, TypeGenerateFilesParams } from './types';
 import { logsPrefix } from './const';
@@ -42,12 +45,9 @@ function withMeasure({
   console.log(`${logsPrefix} ${chalk.yellow(`[${plugin}]`)} took ${chalk.yellow(endTime)} seconds`);
 }
 
-function applyModifications({
-  configs,
-  timeLogs,
-  changedFiles,
-  fileModificationLogs,
-}: Omit<TypeGenerateFilesParams, 'timeLogsOverall'>) {
+function applyModifications(params: TypeGenerateFilesParams) {
+  const { configs, timeLogs, changedFiles, fileModificationLogs } = params;
+
   let modifiedFiles: TypeModifiedFiles = [];
 
   configs.forEach(({ plugin, config }) => {
@@ -75,24 +75,82 @@ function applyModifications({
   }
 }
 
-export const generateFiles = ({
-  configs,
-  timeLogs,
-  changedFiles,
-  timeLogsOverall,
-  fileModificationLogs,
-}: TypeGenerateFilesParams) => {
+export function generateFiles(params: TypeGenerateFilesParams) {
   const startTime = Date.now();
 
-  applyModifications({
-    configs,
-    timeLogs,
-    changedFiles,
-    fileModificationLogs,
-  });
+  applyModifications(params);
 
   const endTime = getTimeDelta(startTime, Date.now());
 
-  // eslint-disable-next-line no-console
-  if (timeLogsOverall) console.log(`${logsPrefix} finished in ${chalk.yellow(endTime)} seconds`);
-};
+  if (params.timeLogsOverall) {
+    // eslint-disable-next-line no-console
+    console.log(`${logsPrefix} finished in ${chalk.yellow(endTime)} seconds`);
+  }
+
+  if (params.watch) {
+    generateFilesOnChange(params);
+  }
+}
+
+const watchLogsPrefix = `${logsPrefix} ${chalk.yellow('[watch]')}`;
+
+export function generateFilesOnChange(options: TypeGenerateFilesParams) {
+  const { paths, onStart, onFinish, aggregationTimeout, changedFilesLogs } = options.watch!;
+
+  let changedFilesLogsData: Array<{ type: string; filePath: string; mtime?: fs.Stats['mtimeMs'] }> =
+    [];
+  let watchDebounceTimeout: NodeJS.Timeout;
+  let watcher = chokidar.watch(paths, { ignoreInitial: true });
+
+  const handlerAdd = fileChanged('add');
+  const handlerChange = fileChanged('change');
+  const handlerUnlink = fileChanged('unlink');
+
+  function addWatchers() {
+    watcher.on('add', handlerAdd).on('change', handlerChange).on('unlink', handlerUnlink);
+  }
+
+  function fileChanged(type: string) {
+    return (filePath: string, stats?: fs.Stats) => {
+      if (changedFilesLogs) {
+        changedFilesLogsData.push({ type, filePath, mtime: stats?.mtimeMs });
+      }
+
+      clearTimeout(watchDebounceTimeout);
+      watchDebounceTimeout = setTimeout(() => {
+        let changedFiles = changedFilesLogsData.map((params) => params.filePath);
+        changedFiles = changedFiles.filter((value, index) => changedFiles.indexOf(value) === index);
+
+        if (changedFilesLogs) {
+          const formattedLogs = changedFilesLogsData
+            .map((params) => {
+              const shortFilePath = params.filePath.replace(process.cwd(), '');
+
+              return `${chalk.blue(`[${params.type}]`)} ${
+                params.mtime ? chalk.grey(`[${params.mtime}] `) : ''
+              }${shortFilePath}`;
+            })
+            .join('\n');
+
+          // eslint-disable-next-line no-console
+          console.log(`${watchLogsPrefix} triggered by\n${formattedLogs}`);
+        }
+
+        void watcher.close().then(() => {
+          onStart?.();
+
+          generateFiles({ ...options, changedFiles });
+
+          changedFilesLogsData = [];
+
+          watcher = chokidar.watch(paths, { ignoreInitial: true });
+          addWatchers();
+
+          onFinish?.();
+        });
+      }, aggregationTimeout || 0);
+    };
+  }
+
+  addWatchers();
+}
