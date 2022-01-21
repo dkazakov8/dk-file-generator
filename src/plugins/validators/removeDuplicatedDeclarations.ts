@@ -19,7 +19,7 @@ export function removeDuplicatedDeclarations(str: string) {
   arr = arr.filter((item, index) => arr.indexOf(item) === index);
 
   finalStr = finalStr.replace(exportRegex, arr.join('\n'));
-  finalStr = finalStr.replace(/\n\n\s/g, '\n');
+  finalStr = finalStr.replace(/\n\n+\s/g, '\n\n');
 
   return finalStr;
 }
