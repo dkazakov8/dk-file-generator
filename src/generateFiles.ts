@@ -87,9 +87,7 @@ export function generateFiles(params: TypeGenerateFilesParams) {
     console.log(`${logsPrefix} finished in ${chalk.yellow(endTime)} seconds`);
   }
 
-  if (params.watch) {
-    generateFilesOnChange(params);
-  }
+  if (params.watch) generateFilesOnChange(params);
 }
 
 const watchLogsPrefix = `${logsPrefix} ${chalk.yellow('[watch]')}`;
@@ -113,7 +111,17 @@ export function generateFilesOnChange(options: TypeGenerateFilesParams) {
 
   function fileChanged(type: string) {
     return (filePath: string, stats?: fs.Stats) => {
-      if (isGenerating) return;
+      if (isGenerating) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `${watchLogsPrefix} change in ${filePath.replace(
+            process.cwd(),
+            ''
+          )} discarded because generation is in progress`
+        );
+
+        return;
+      }
 
       changedFilesLogsData.push({ type, filePath, mtime: stats?.mtimeMs });
 
@@ -142,7 +150,7 @@ export function generateFilesOnChange(options: TypeGenerateFilesParams) {
         void watcher.close().then(() => {
           onStart?.();
 
-          generateFiles({ ...options, changedFiles });
+          generateFiles({ ...options, changedFiles, watch: undefined });
 
           onFinish?.();
 
